@@ -19,9 +19,11 @@
     "fork_url": "https://github.com/tlmn2008/gocv",
     "branch": "corex-port",
     "compare_url": "https://github.com/tlmn2008/gocv/compare/release...corex-port",
-    "push_commit": "ef87a717b32833d1975175bb5e381e8cf76a79f2",
+    "push_commit": "bef31a02eac41aa4c1cf9909d6e3433df7aa013c",
     "push_status": "success",
-    "pushed_at": "2026-07-20T08:32:34Z"
+    "pushed_at": "2026-07-20T08:32:34Z",
+    "default_branch": "corex-port",
+    "default_branch_status": "success"
   },
   "local_logs": {
     "compile_log": "/home/repos/gocv/corex_port/build/compile.log",

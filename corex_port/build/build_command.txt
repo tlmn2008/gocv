@@ -1,0 +1,16 @@
+# Build OpenCV 4.13 with CUDA against Iluvatar CoreX (clang++ / ivcore11).
+# From repo root, after downloading OpenCV sources into .tools/opencv-src:
+#
+#   . /etc/profile.d/corex.sh
+#   export CUDA_VISIBLE_DEVICES=0,1
+#   ./scripts/build_opencv_corex.sh
+#
+# Then (once OpenCV is installed under .tools/opencv-install):
+#   export PKG_CONFIG_PATH=$PWD/.tools/opencv-install/lib/pkgconfig:$PKG_CONFIG_PATH
+#   export LD_LIBRARY_PATH=$PWD/.tools/opencv-install/lib:/usr/local/corex/lib64:/usr/local/corex/lib:$LD_LIBRARY_PATH
+#   go test ./cuda
+#
+# Observed wall (2026-07-20): OpenCV modules/core/src/cuda/gpu_mat.cu fails in
+# CoreX llc with NV PTX inline asm (%laneid, cvt.sat.*, ld.global.cg) pulled via
+# cudev / CUDA headers — see corex_port/build/compile.log.
+./scripts/build_opencv_corex.sh

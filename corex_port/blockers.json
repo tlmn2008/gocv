@@ -1,0 +1,80 @@
+{
+  "blockers": [
+    {
+      "id": 1,
+      "category": "terminal",
+      "symptom": "OpenCV CUDA .cu (gpu_mat.cu) fails CoreX llc with NV PTX inline asm",
+      "file": "opencv modules/core/src/cuda/gpu_mat.cu via opencv_contrib cudev",
+      "error_snippet": "mov.u32 v13, %laneid; / cvt.sat.s8.u8 / ld.global.cg.* asm constraint 'h'/'f'/'d'",
+      "attempts": [
+        {
+          "action": "Configure OpenCV 4.13 WITH_CUDA using CoreX clang++ , CUDA_ARCH_BIN=7.5, CMAKE_CUDA_FLAGS=--cuda-gpu-arch=ivcore11, CCC_OVERRIDE unwrap -Xcompiler=*",
+          "result": "cmake configure succeeded with cudev+core; CUDA detected 10.2"
+        },
+        {
+          "action": "NPP stubs (.tools/npp-stubs) to satisfy CMake NOTFOUND for libnpp*",
+          "result": "cmake generate OK; contrib cudaarithm etc omitted from BUILD_LIST"
+        },
+        {
+          "action": "Patch cudev saturate_cast/shuffle for __ILUVATAR__; stub TexturePtr tex2D/tex1Dfetch",
+          "result": "frontend tex2D/half/shfl errors cleared; build progressed to llc"
+        },
+        {
+          "action": "Force -std=c++17 and -x ivcore via CCC_OVERRIDE_OPTIONS",
+          "result": "ixthrust C++17 / Xcompiler walls cleared; llc still rejects NV PTX from CUDA/cudev headers"
+        }
+      ],
+      "final_verdict": "Compiling OpenCV GpuMat CUDA kernels on ivcore11 requires replacing NV PTX asm paths in CUDA headers / cudev (beyond Phase-1 local patches). Classified terminal for this environment/SDK revision.",
+      "resolved": false
+    },
+    {
+      "id": 2,
+      "category": "terminal",
+      "symptom": "No GPU device nodes; ixsmi reports no GPUs; cudaMalloc returns 100",
+      "file": "/dev/iluvatar0,/dev/iluvatar1",
+      "error_snippet": "No supported GPUs were found. / cudaErrorNoDevice (100)",
+      "attempts": [
+        {
+          "action": "Confirm GPUs in sysfs (iluvatar0/1 major 510) and try mknod c 510 0/1",
+          "result": "Permission denied; CapEff=0 and CAP_MKNOD not usable in this container"
+        },
+        {
+          "action": "Run CoreX clang++ cudart smoke",
+          "result": "compile success; runtime cudaMalloc=100"
+        }
+      ],
+      "final_verdict": "Host has Iluvatar GPUs but container /dev lacks device nodes and cannot create them — runtime GPU tests blocked.",
+      "resolved": false
+    },
+    {
+      "id": 3,
+      "category": "workaround-able",
+      "symptom": "CoreX does not ship NPP; OpenCV CUDA modules require libnppc/nppi*",
+      "file": "OpenCV CMake CUDA_npp*_LIBRARY",
+      "error_snippet": "CUDA_nppc_LIBRARY-NOTFOUND ... used but set to NOTFOUND",
+      "attempts": [
+        {
+          "action": "Create local stub shared libs under .tools/npp-stubs and pass -DCUDA_*_LIBRARY=...",
+          "result": "resolved for cmake configure of core+cudev; full cudaarithm still needs real NPP or CV-CUDA rewrite"
+        }
+      ],
+      "final_verdict": "Stubs unblock cmake; functional NPP-dependent OpenCV CUDA modules remain blocked without NPP→CV-CUDA port (iluvatar-cuda-base npp-cvcuda).",
+      "resolved": true
+    },
+    {
+      "id": 4,
+      "category": "workaround-able",
+      "symptom": "clang rejects -Xcompiler=-DCVAPI_EXPORTS / -Xcompiler=-fPIC from OpenCV FindCUDA",
+      "file": "OpenCV FindCUDA generated cuda_compile_*.cmake",
+      "error_snippet": "unknown argument: '-Xcompiler=-DCVAPI_EXPORTS'",
+      "attempts": [
+        {
+          "action": "CCC_OVERRIDE_OPTIONS x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC +-DCVAPI_EXPORTS +-fPIC (nvcc-flag-translation case)",
+          "result": "resolved"
+        }
+      ],
+      "final_verdict": "Documented in scripts/build_opencv_corex.sh CCC_OVERRIDE_OPTIONS",
+      "resolved": true
+    }
+  ]
+}

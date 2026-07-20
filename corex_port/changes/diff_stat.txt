@@ -1,0 +1,11 @@
+ .gitignore | 3 +++
+ Makefile   | 5 +++++
+ 2 files changed, 8 insertions(+)
+---- untracked (will add) ----
+ M .gitignore
+ M Makefile
+?? Dockerfile.opencv-gpu-corex
+?? corex_compat/
+?? corex_port/
+?? patches/corex/
+?? scripts/

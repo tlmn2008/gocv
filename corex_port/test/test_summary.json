@@ -1,0 +1,24 @@
+{
+  "tests_run": 0,
+  "tests_passed": 0,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "metrics": [
+    {
+      "name": "corex_cudart_smoke_compile",
+      "metric_type": "pass_rate",
+      "value": 1.0,
+      "unit": "ratio",
+      "source": "clang++ -x ivcore --cuda-gpu-arch=ivcore11 corex_smoke.cu -lcudart"
+    },
+    {
+      "name": "corex_cudart_smoke_runtime",
+      "metric_type": "other",
+      "value": 100,
+      "unit": "cudaError_t",
+      "config": "cudaMalloc returns cudaErrorNoDevice (100)",
+      "source": "/tmp/corex_smoke"
+    }
+  ],
+  "notes": "gocv ./cuda tests not executed: OpenCV-with-CUDA did not finish building on CoreX; GPU device nodes /dev/iluvatar* absent (CAP_MKNOD unavailable)."
+}

@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "id": "nvcc-flag-translation",
+      "reason": "OpenCV FindCUDA emits -Xcompiler=FORM, -gencode, --use_fast_math; translated/stripped via CCC_OVERRIDE_OPTIONS"
+    },
+    {
+      "id": "cmake-corex-template",
+      "reason": "CMAKE_CUDA_COMPILER=clang++, --cuda-gpu-arch=ivcore11 pattern for OpenCV CUDA configure"
+    },
+    {
+      "id": "npp-cvcuda",
+      "reason": "CoreX has no NPP; OpenCV CUDA modules require npp*; stubs used for cmake only"
+    },
+    {
+      "id": "texture-software-bridge",
+      "reason": "cudev TexturePtr uses tex2D/tex1Dfetch; bridge pulled NV PTX — stubbed operators instead"
+    },
+    {
+      "id": "trap-macro-ptx-asm / NV PTX inline asm",
+      "reason": "gpu_mat.cu llc failure on %laneid / cvt.sat / ld.global.cg PTX from CUDA headers"
+    },
+    {
+      "id": "double-degraded-fp32",
+      "reason": "Patched cudev double shfl_* to float path under __ILUVATAR__"
+    },
+    {
+      "id": "cuda-fp16-half-raw-redef / half APIs",
+      "reason": "saturate_cast half path gated on __ILUVATAR__ like CUDACC>=9"
+    }
+  ]
+}

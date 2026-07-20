@@ -1,0 +1,30 @@
+=== ixsmi ===
+No supported GPUs were found.
+=== /sys/class/iluvatar-sys ===
+total 0
+drwxr-xr-x  2 root root 0 Jul 20 16:08 .
+drwxr-xr-x 80 root root 0 Jul 20 16:08 ..
+lrwxrwxrwx  1 root root 0 Jul 20 16:08 iluvatar0 -> ../../devices/virtual/iluvatar-sys/iluvatar0
+lrwxrwxrwx  1 root root 0 Jul 20 16:08 iluvatar1 -> ../../devices/virtual/iluvatar-sys/iluvatar1
+lrwxrwxrwx  1 root root 0 Jul 20 16:08 itrctl -> ../../devices/virtual/iluvatar-sys/itrctl
+--- /sys/class/iluvatar-sys/iluvatar0 ---
+510:0
+MAJOR=510
+MINOR=0
+DEVNAME=iluvatar0
+DEVMODE=0666
+--- /sys/class/iluvatar-sys/iluvatar1 ---
+510:1
+MAJOR=510
+MINOR=1
+DEVNAME=iluvatar1
+DEVMODE=0666
+=== /dev ===
+ls: cannot access '/dev/iluvatar*': No such file or directory
+ls: cannot access '/dev/itrctl': No such file or directory
+=== Cap ===
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	000001fffffffff9
+CapAmb:	0000000000000000

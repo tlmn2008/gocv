@@ -1,0 +1,30 @@
+{
+  "repo_name": "gocv",
+  "repo_url": "https://github.com/hybridgroup/gocv",
+  "source_commit": "274ac8a2d6fc025a9dd566ae10b7a54644582c40",
+  "source_commit_date": "2026-01-05T18:05:17+00:00",
+  "source_branch": "release",
+  "migration_started_at": "2026-07-20T08:07:00Z",
+  "migration_finished_at": "2026-07-20T08:32:18Z",
+  "sdk_version": "/usr/local/corex",
+  "skill_version": "corex-CUDA-compatible-migration@1.0",
+  "compile_status": "failed",
+  "test_status": "not_attempted",
+  "overall_status": "blocked",
+  "tests_run": 0,
+  "tests_passed": 0,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "github": {
+    "fork_url": "https://github.com/tlmn2008/gocv",
+    "branch": "corex-port",
+    "compare_url": "https://github.com/tlmn2008/gocv/compare/release...corex-port",
+    "push_commit": "58977c2c356e2a5586b6c9262c8c0cf4a36e4bee",
+    "push_status": "success",
+    "pushed_at": "2026-07-20T08:32:18Z"
+  },
+  "local_logs": {
+    "compile_log": "/home/repos/gocv/corex_port/build/compile.log",
+    "test_log": "/home/repos/gocv/corex_port/test/test.log"
+  }
+}

@@ -10,3 +10,6 @@ count.out
 .idea/
 contrib/data.yaml
 contrib/testOilPainting.png
+
+# CoreX local build artifacts (not part of the port commit)
+.tools/

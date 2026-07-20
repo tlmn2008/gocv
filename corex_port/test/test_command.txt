@@ -1,0 +1,10 @@
+# CUDA package tests (requires OpenCV-with-CUDA CoreX install + /dev/iluvatar*).
+. /etc/profile.d/corex.sh
+export CUDA_VISIBLE_DEVICES=0,1
+export PATH="${PATH}:/home/repos/gocv/.tools/go/bin"
+export PKG_CONFIG_PATH="/home/repos/gocv/.tools/opencv-install/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+export LD_LIBRARY_PATH="/home/repos/gocv/.tools/opencv-install/lib:/usr/local/corex/lib64:/usr/local/corex/lib:${LD_LIBRARY_PATH:-}"
+unset CCC_OVERRIDE_OPTIONS
+go test -tags matprofile ./cuda
+# Smoke alternative once OpenCV CUDA is available:
+# go run -tags cuda ./cmd/cuda/main.go

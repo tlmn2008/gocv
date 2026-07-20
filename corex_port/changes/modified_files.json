@@ -1,0 +1,54 @@
+{
+  "files": [
+    {
+      "path": "Makefile",
+      "action": "edit",
+      "reason": "Add build_cuda_corex target invoking scripts/build_opencv_corex.sh"
+    },
+    {
+      "path": "Dockerfile.opencv-gpu-corex",
+      "action": "add",
+      "reason": "Document OpenCV+CUDA image build with CoreX clang++ / ivcore11 (no nvcc)"
+    },
+    {
+      "path": "scripts/build_opencv_corex.sh",
+      "action": "add",
+      "reason": "Local OpenCV CUDA build against /usr/local/corex with NPP stubs and CCC_OVERRIDE"
+    },
+    {
+      "path": "patches/corex/saturate_cast.hpp",
+      "action": "add",
+      "reason": "cudev half cast path for __ILUVATAR__ (CUDACC_VER gate)"
+    },
+    {
+      "path": "patches/corex/shuffle.hpp",
+      "action": "add",
+      "reason": "Map __shfl* to *_sync; degrade double shuffles on ivcore11"
+    },
+    {
+      "path": "patches/corex/texture.hpp",
+      "action": "add",
+      "reason": "Stub TexturePtr device tex2D/tex1Dfetch on __ILUVATAR__"
+    },
+    {
+      "path": "patches/corex/apply_to_opencv_contrib.sh",
+      "action": "add",
+      "reason": "Apply cudev header patches onto opencv_contrib tree"
+    },
+    {
+      "path": "corex_compat/",
+      "action": "add",
+      "reason": "Vendored texture-software-bridge headers for optional -I shadowing experiments"
+    },
+    {
+      "path": "corex_port/",
+      "action": "add",
+      "reason": "Migration manifest, blockers, commands, agent notes"
+    },
+    {
+      "path": ".gitignore",
+      "action": "edit",
+      "reason": "Ignore .tools/ local OpenCV build trees"
+    }
+  ]
+}

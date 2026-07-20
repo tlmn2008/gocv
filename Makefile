@@ -233,6 +233,11 @@ build_cuda:
 	$(MAKE) preinstall
 	cd -
 
+# Build OpenCV with CUDA for Iluvatar CoreX (clang++ / ivcore11, no nvcc).
+# Uses scripts/build_opencv_corex.sh; installs under .tools/opencv-install by default.
+build_cuda_corex:
+	./scripts/build_opencv_corex.sh
+
 # Build OpenCV statically linked
 build_static:
 	cd $(TMP_DIR)opencv/opencv-$(OPENCV_VERSION)

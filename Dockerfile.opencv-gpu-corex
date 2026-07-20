@@ -1,0 +1,84 @@
+# OpenCV with CUDA for Iluvatar CoreX (ivcore11).
+# Build host: CoreX SDK at /usr/local/corex (clang/clang++, never nvcc).
+# Usage:
+#   docker build -f Dockerfile.opencv-gpu-corex -t gocv-opencv-corex:4.13.0 .
+FROM ubuntu:24.04 AS opencv-gpu-corex-base
+LABEL maintainer="corex-port"
+ENV DEBIAN_FRONTEND=noninteractive
+
+# CoreX SDK is expected bind-mounted or pre-installed at /usr/local/corex on the build host.
+# This Dockerfile documents the cmake flags; local builds use scripts/build_opencv_corex.sh.
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git build-essential cmake pkg-config unzip wget curl ca-certificates \
+    libjpeg-dev libpng-dev libtiff-dev libtbb-dev \
+    libavcodec-dev libavformat-dev libswscale-dev \
+    libharfbuzz-dev libfreetype-dev nasm && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG OPENCV_VERSION="4.13.0"
+ENV OPENCV_VERSION=$OPENCV_VERSION
+ARG COREX_PATH=/usr/local/corex
+ENV COREX_PATH=$COREX_PATH
+ENV CUDA_HOME=$COREX_PATH
+ENV CUDA_PATH=$COREX_PATH
+ENV PATH=$COREX_PATH/bin:$PATH
+ENV LD_LIBRARY_PATH=$COREX_PATH/lib64:$COREX_PATH/lib
+ENV CC=$COREX_PATH/bin/clang
+ENV CXX=$COREX_PATH/bin/clang++
+ENV CUDACXX=$COREX_PATH/bin/clang++
+ENV CMAKE_CUDA_ARCHITECTURES=ivcore11
+ENV CUDA_VISIBLE_DEVICES=0,1
+ENV CCC_OVERRIDE_OPTIONS="x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas"
+
+ARG OPENCV_FILE="https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip"
+ARG OPENCV_CONTRIB_FILE="https://github.com/opencv/opencv_contrib/archive/${OPENCV_VERSION}.zip"
+
+RUN curl -Lo opencv.zip ${OPENCV_FILE} && \
+    unzip -q opencv.zip && \
+    curl -Lo opencv_contrib.zip ${OPENCV_CONTRIB_FILE} && \
+    unzip -q opencv_contrib.zip && \
+    rm opencv.zip opencv_contrib.zip && \
+    cd opencv-${OPENCV_VERSION} && \
+    mkdir build && cd build && \
+    cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    -D WITH_IPP=OFF \
+    -D WITH_OPENGL=OFF \
+    -D WITH_QT=OFF \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D CMAKE_C_COMPILER=${COREX_PATH}/bin/clang \
+    -D CMAKE_CXX_COMPILER=${COREX_PATH}/bin/clang++ \
+    -D CMAKE_CUDA_COMPILER=${COREX_PATH}/bin/clang++ \
+    -D CMAKE_CUDA_ARCHITECTURES=ivcore11 \
+    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-${OPENCV_VERSION}/modules \
+    -D OPENCV_ENABLE_NONFREE=ON \
+    -D WITH_JASPER=OFF \
+    -D BUILD_DOCS=OFF \
+    -D BUILD_EXAMPLES=OFF \
+    -D BUILD_TESTS=OFF \
+    -D BUILD_PERF_TESTS=OFF \
+    -D BUILD_opencv_java=OFF \
+    -D BUILD_opencv_python=OFF \
+    -D WITH_TBB=ON \
+    -D WITH_CUDA=ON \
+    -D ENABLE_FAST_MATH=OFF \
+    -D CUDA_FAST_MATH=OFF \
+    -D WITH_CUBLAS=ON \
+    -D CUDA_TOOLKIT_ROOT_DIR=${COREX_PATH} \
+    -D CUDA_ARCH_BIN= \
+    -D CUDA_ARCH_PTX= \
+    -D BUILD_opencv_cudacodec=OFF \
+    -D WITH_CUDNN=OFF \
+    -D OPENCV_DNN_CUDA=OFF \
+    -D OPENCV_GENERATE_PKGCONFIG=ON .. && \
+    make -j $(nproc --all) && \
+    make preinstall && make install && ldconfig && \
+    cd / && rm -rf opencv*
+
+FROM opencv-gpu-corex-base AS opencv-gpu-corex-golang
+ENV GO_RELEASE=1.25.5
+RUN wget https://dl.google.com/go/go${GO_RELEASE}.linux-amd64.tar.gz && \
+    tar xfv go${GO_RELEASE}.linux-amd64.tar.gz -C /usr/local && \
+    rm go${GO_RELEASE}.linux-amd64.tar.gz
+ENV PATH="${PATH}:/usr/local/go/bin"
+CMD ["go", "version"]

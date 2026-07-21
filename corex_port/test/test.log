@@ -1,0 +1,41 @@
+go test ./cuda (expect fail: no OpenCV)
+go: downloading github.com/pascaldekloe/goe v0.1.0
+# runtime/cgo
+### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
+### Adding argument ivcore at beginning
+### Adding argument -x at beginning
+### Adding argument -DCVAPI_EXPORTS at end
+### Adding argument -fPIC at end
+### Adding argument --std=c++17 at end
+### Adding argument --cuda-gpu-arch=ivcore11 at end
+# runtime/cgo
+### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
+### Adding argument ivcore at beginning
+### Adding argument -x at beginning
+### Adding argument -DCVAPI_EXPORTS at end
+### Adding argument -fPIC at end
+### Adding argument --std=c++17 at end
+### Adding argument --cuda-gpu-arch=ivcore11 at end
+# runtime/cgo
+### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
+### Adding argument ivcore at beginning
+### Adding argument -x at beginning
+### Adding argument -DCVAPI_EXPORTS at end
+### Adding argument -fPIC at end
+### Adding argument --std=c++17 at end
+### Adding argument --cuda-gpu-arch=ivcore11 at end
+# runtime/cgo
+### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
+### Adding argument ivcore at beginning
+### Adding argument -x at beginning
+### Adding argument -DCVAPI_EXPORTS at end
+### Adding argument -fPIC at end
+### Adding argument --std=c++17 at end
+### Adding argument --cuda-gpu-arch=ivcore11 at end
+# runtime/cgo
+### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
+### Adding argument ivcore at beginning
+### Adding argument -x at beginning
+### Adding argument -DCVAPI_EXPORTS at end
+### Adding argument -fPIC at end
+### Adding argument --std=c++17 at end

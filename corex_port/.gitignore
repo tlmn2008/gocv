@@ -1,2 +1,5 @@
 build/*.log
-test/*.log
+env/*.log
+!env/ixsmi.log
+!env/clang_version.txt
+# test/test.log is committed as authoritative test evidence (do not ignore)

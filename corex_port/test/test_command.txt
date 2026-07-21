@@ -1,10 +1,18 @@
-# CUDA package tests (requires OpenCV-with-CUDA CoreX install + /dev/iluvatar*).
+# gocv CUDA package tests against pre-installed CoreX OpenCV 4.6.0.
+# gocv is version-matched to v0.31.0 (OpenCV 4.6.0) in worktree .tools/gocv-0.31.
 . /etc/profile.d/corex.sh
 export CUDA_VISIBLE_DEVICES=0,1
-export PATH="${PATH}:/home/repos/gocv/.tools/go/bin"
-export PKG_CONFIG_PATH="/home/repos/gocv/.tools/opencv-install/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-export LD_LIBRARY_PATH="/home/repos/gocv/.tools/opencv-install/lib:/usr/local/corex/lib64:/usr/local/corex/lib:${LD_LIBRARY_PATH:-}"
+export PATH="/home/repos/gocv/.tools/go/bin:${PATH}"
+export PKG_CONFIG_PATH="/usr/local/corex/lib64/pkgconfig"
+export PKG_CONFIG="pkg-config --define-prefix"
+export LD_LIBRARY_PATH="/usr/local/corex/lib64:/usr/local/corex/lib:${LD_LIBRARY_PATH:-}"
 unset CCC_OVERRIDE_OPTIONS
-go test -tags matprofile ./cuda
-# Smoke alternative once OpenCV CUDA is available:
-# go run -tags cuda ./cmd/cuda/main.go
+export CGO_CFLAGS="-I/usr/local/corex/include/opencv4"
+export CGO_CPPFLAGS="-I/usr/local/corex/include/opencv4 -D_GLIBCXX_USE_CXX11_ABI=0"
+export CGO_CXXFLAGS="-I/usr/local/corex/include/opencv4 -D_GLIBCXX_USE_CXX11_ABI=0"
+export CGO_LDFLAGS="-L/usr/local/corex/lib64"
+
+cd .tools/gocv-0.31
+go test -v -count=1 ./cuda
+# Clean run isolating CoreX OpenCV crashers (flip stub / PyrLK no-cuda / HoughSegment SIGILL):
+go test -v -count=1 -skip '^(TestFlip|TestHoughSegment|TestSparsePyrLKOpticalFlow)' ./cuda

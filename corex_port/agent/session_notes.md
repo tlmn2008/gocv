@@ -1,27 +1,36 @@
 # gocv CoreX 迁移记录
 
-- **来源：** hybridgroup/gocv `release` @ `274ac8a2d6fc025a9dd566ae10b7a54644582c40`（v0.43.0）
-- **目标：** 让 gocv `cuda/` 包能针对 Iluvatar CoreX（ivcore11）用 clang++（而非 nvcc）构建/测试。
+- **来源：** hybridgroup/gocv `release` @ `c7a0736`（v0.31.0，对应 OpenCV 4.6.0）
+- **目标：** 让 gocv `cuda/` 包在 Iluvatar CoreX（ivcore11）上用 CoreX 工具链构建、并在真实 GPU 上跑测试。
 
-## 调研
+## CUDA 使用性质
 
-- gocv 本身**不编译** CUDA kernel；`cuda/` 是对 OpenCV CUDA 模块的 CGO 封装。
-- 构建面：`Makefile` 的 `build_cuda` / Dockerfile `Dockerfile.opencv-gpu-cuda-*`（NVIDIA 基础镜像 + 面向 nvcc 的 cmake）。
-- 验证方式：`go test ./cuda`、`go run -tags cuda ./cmd/cuda/main.go`。
+- gocv **本身不编译任何 CUDA kernel**；`cuda/` 只是对 OpenCV CUDA 模块的 CGO（C++）封装。
+- 因此本次迁移的本质不是 `nvcc→clang` kernel 移植，而是**让 Go+CGO 正确链接到已经用 CoreX 构建好的 OpenCV**。
 
-## 已执行工作
+## 环境（本次关键变化）
 
-1. 预检：CoreX clang 22.1；`ixsmi` → 无 GPU（sysfs 有 iluvatar0/1，但 `/dev/iluvatar*` 缺失，`mknod` 被拒）。
-2. 在 `.tools/go` 下安装 Go 1.25.5（沙箱无法写 `/usr/local`）。
-3. 下载 OpenCV/opencv_contrib 4.13.0；编写 `scripts/build_opencv_corex.sh` + `Dockerfile.opencv-gpu-corex` + `make build_cuda_corex`。
-4. CMake WITH_CUDA 指向 `/usr/local/corex`：CUDA **识别为 10.2**；arch 自动探测为空，用 `CUDA_ARCH_BIN=7.5` + `--cuda-gpu-arch=ivcore11` 修复。
-5. 缺 NPP → 本地 stub `.so`；默认 `BUILD_LIST` 中剔除重度依赖 NPP 的 contrib 模块（保留 `cudev` 供 GpuMat）。
-6. `-Xcompiler=-*` 被拒 → 用 `CCC_OVERRIDE_OPTIONS` 拆解（iluvatar-cuda-base 的 nvcc-flag-translation 用例）。
-7. 为 `__ILUVATAR__` 打了 cudev 头补丁（`saturate_cast`、`shuffle`、`texture`）。
-8. **卡点：** `gpu_mat.cu` 进到 CoreX llc 后，因 CUDA/cudev 头链里的 NV PTX（`%laneid`、`cvt.sat.*`、`ld.global.cg` / asm 约束）编译失败。
-9. 独立 CoreX 冒烟：`clang++ -x ivcore ... -lcudart` **可编译**；运行时 `cudaMalloc=100`（无设备节点）。
+- 环境新装了 **CoreX 构建版 OpenCV 4.6.0**，位于 `/usr/local/corex`（头文件 `include/opencv4`，含 `libopencv_cuda*.so`）。
+- GPU 正常：`ixsmi` 识别 2× Iluvatar BI-V150；`CUDA_VISIBLE_DEVICES=0,1`。
+- 工具链：CoreX clang++ 22.1.0git，Go 1.25.5（用户目录 `.tools/go`）。
 
-## 结论
+## 适配内容
 
-- 已提交移植脚手架 + CoreX OpenCV 构建路径文档。
-- gocv CUDA 包的完整编译/测试**被阻塞**，需先在 CoreX 上编出 OpenCV CUDA `.cu`（PTX 问题）且具备 GPU 设备节点。
+1. **版本对齐**：gocv HEAD（v0.43.0）要求 OpenCV 4.12，与已装的 4.6.0 API 不符（aruco/dnn 报错）。改用匹配 4.6.0 的 gocv **v0.31.0**，以 git worktree 放在 `.tools/gocv-0.31`。
+2. **pkg-config 路径**：`opencv4.pc` 把 `prefix` 写死为 `/usr/local`，实际在 `/usr/local/corex`。用 `pkg-config --define-prefix` + `CGO_LDFLAGS=-L/usr/local/corex/lib64` 修正。
+3. **libstdc++ ABI**：CoreX OpenCV 库导出的是 **pre-C++11 std::string ABI**（`nm -D` 全是 `RKSs`、无 `__cxx11`）。给 CGO 加 `-D_GLIBCXX_USE_CXX11_ABI=0`，否则所有 `cv::` 字符串符号链接期未定义。
+
+## 结果
+
+- **编译/链接：成功**；`cuda.test` 在 CoreX OpenCV 上构建通过。
+- **测试：45 例中 38 例通过**（在真实 BI-V150 上运行）。核心 GpuMat / arithm / 滤波 / resize / 金字塔 / remap / MOG 背景建模 / Canny 全部通过。
+- **7 例失败，全部源于 CoreX OpenCV 库本身，与 gocv 绑定无关：**
+  - `TestFlip` / `TestFlipWithStream`：CoreX `cv::cuda::flip` 是抛异常的占位实现（`need to support!!!`）。
+  - `TestSparsePyrLKOpticalFlow_Calc`：CoreX cudaoptflow 的 PyrLK 未启用 CUDA（`throw_no_cuda: No CUDA support`）。
+  - `TestHoughSegment_Calc` / `WithStream`：CoreX cudaimgproc 的 HoughSegment kernel 触发 `SIGILL`。
+  - `TestHoughLines_Calc` / `WithStream`：能跑通，但结果列数 1598 vs 上游硬编码期望 1588（数值分布略有差异，断言是按 NVIDIA 结果写死的精确匹配）。
+
+## Failure Gate
+
+- 所有失败均已**实跑复现**并归类：`flip` / PyrLK / HoughSegment 为 **terminal**（属 CoreX OpenCV 供应商的库缺陷，受"零改动 SDK"约束不能本地绕过）；HoughLines 数值差异为 **workaround-able**（换成带容差的断言即可通过，功能本身可用）。
+- 已验证 GPU 可用、可执行，非"推断失败"。

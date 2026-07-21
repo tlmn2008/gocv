@@ -1,41 +1,115 @@
-go test ./cuda (expect fail: no OpenCV)
-go: downloading github.com/pascaldekloe/goe v0.1.0
-# runtime/cgo
-### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
-### Adding argument ivcore at beginning
-### Adding argument -x at beginning
-### Adding argument -DCVAPI_EXPORTS at end
-### Adding argument -fPIC at end
-### Adding argument --std=c++17 at end
-### Adding argument --cuda-gpu-arch=ivcore11 at end
-# runtime/cgo
-### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
-### Adding argument ivcore at beginning
-### Adding argument -x at beginning
-### Adding argument -DCVAPI_EXPORTS at end
-### Adding argument -fPIC at end
-### Adding argument --std=c++17 at end
-### Adding argument --cuda-gpu-arch=ivcore11 at end
-# runtime/cgo
-### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
-### Adding argument ivcore at beginning
-### Adding argument -x at beginning
-### Adding argument -DCVAPI_EXPORTS at end
-### Adding argument -fPIC at end
-### Adding argument --std=c++17 at end
-### Adding argument --cuda-gpu-arch=ivcore11 at end
-# runtime/cgo
-### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
-### Adding argument ivcore at beginning
-### Adding argument -x at beginning
-### Adding argument -DCVAPI_EXPORTS at end
-### Adding argument -fPIC at end
-### Adding argument --std=c++17 at end
-### Adding argument --cuda-gpu-arch=ivcore11 at end
-# runtime/cgo
-### CCC_OVERRIDE_OPTIONS: ^ivcore ^-x x--use_fast_math x-lineinfo x--generate-line-info X--threads X-maxrregcount X-Xptxas x-Xcompiler=-DCVAPI_EXPORTS x-Xcompiler=-fPIC X-gencode x--std=c++11 +-DCVAPI_EXPORTS +-fPIC +--std=c++17 +--cuda-gpu-arch=ivcore11
-### Adding argument ivcore at beginning
-### Adding argument -x at beginning
-### Adding argument -DCVAPI_EXPORTS at end
-### Adding argument -fPIC at end
-### Adding argument --std=c++17 at end
+====================================================================
+ gocv CUDA bindings on Iluvatar CoreX (ivcore11) — authoritative test log
+====================================================================
+date:        2026-07-21T16:53:27+08:00
+gocv:        v0.31.0 (matches OpenCV 4.6.0; upstream HEAD v0.43.0 needs OpenCV 4.12)
+opencv:      4.6.0 @ /usr/local/corex (CoreX build, clang++/ivcore11)
+go:          go version go1.25.5 linux/amd64
+toolchain:   CoreX clang++ clang version 22.1.0git (4.5.0.20260630 a526c4d94919b0feb06f49a88a749e075a7f5cf3)
+cgo flags:   -I/usr/local/corex/include/opencv4  -D_GLIBCXX_USE_CXX11_ABI=0  -L/usr/local/corex/lib64
+devices:     GPU  0: Iluvatar BI-V150 (UUID: GPU-b1a1c57f-abe9-53b4-8ba6-45776c97aadb);GPU  1: Iluvatar BI-V150 (UUID: GPU-3195d3ae-3608-5b7a-9d36-367be0932e87);
+
+NOTE: build/link succeed with CoreX OpenCV; failures below are CoreX OpenCV
+      library gaps (not gocv binding issues). Crashing cases are isolated via
+      -skip so the rest of the suite can report cleanly; each is logged after.
+
+-------- FULL SUITE (crashers isolated) : go test -v -skip '^(TestFlip|TestHoughSegment|TestSparsePyrLKOpticalFlow)' --------
+=== RUN   TestAbs
+--- PASS: TestAbs (0.02s)
+=== RUN   TestAbsWithStream
+--- PASS: TestAbsWithStream (0.00s)
+=== RUN   TestAbsDiff
+--- PASS: TestAbsDiff (0.00s)
+=== RUN   TestAdd
+--- PASS: TestAdd (0.01s)
+=== RUN   TestBitwiseAnd
+--- PASS: TestBitwiseAnd (0.00s)
+=== RUN   TestBitwiseNot
+--- PASS: TestBitwiseNot (0.00s)
+=== RUN   TestBitwiseOr
+--- PASS: TestBitwiseOr (0.00s)
+=== RUN   TestBitwiseXor
+--- PASS: TestBitwiseXor (0.00s)
+=== RUN   TestDivide
+--- PASS: TestDivide (0.00s)
+=== RUN   TestExp
+--- PASS: TestExp (0.00s)
+=== RUN   TestLog
+--- PASS: TestLog (0.00s)
+=== RUN   TestMax
+--- PASS: TestMax (0.00s)
+=== RUN   TestMin
+--- PASS: TestMin (0.00s)
+=== RUN   TestMultiply
+--- PASS: TestMultiply (0.00s)
+=== RUN   TestThreshold
+--- PASS: TestThreshold (0.00s)
+=== RUN   TestThresholdWithStream
+--- PASS: TestThresholdWithStream (0.00s)
+=== RUN   TestCudaMOG2
+--- PASS: TestCudaMOG2 (0.00s)
+=== RUN   TestCudaMOG2WithStream
+--- PASS: TestCudaMOG2WithStream (0.00s)
+=== RUN   TestCudaMOG
+--- PASS: TestCudaMOG (0.00s)
+=== RUN   TestCudaMOGWithStream
+--- PASS: TestCudaMOGWithStream (0.00s)
+=== RUN   TestNewGpuMat
+--- PASS: TestNewGpuMat (0.00s)
+=== RUN   TestNewGpuMatFromMat
+--- PASS: TestNewGpuMatFromMat (0.00s)
+=== RUN   TestNewGpuMatFromMatWithSize
+--- PASS: TestNewGpuMatFromMatWithSize (0.00s)
+=== RUN   TestNewGpuMatWithSize
+--- PASS: TestNewGpuMatWithSize (0.00s)
+=== RUN   TestGetCudaEnabledDeviceCount
+--- PASS: TestGetCudaEnabledDeviceCount (0.00s)
+=== RUN   TestGaussianFilter_Apply
+--- PASS: TestGaussianFilter_Apply (0.01s)
+=== RUN   TestGaussianFilter_ApplyWithStream
+--- PASS: TestGaussianFilter_ApplyWithStream (0.00s)
+=== RUN   TestSobelFilter_Apply
+--- PASS: TestSobelFilter_Apply (0.01s)
+=== RUN   TestSobelFilter_ApplyWithStream
+--- PASS: TestSobelFilter_ApplyWithStream (0.00s)
+=== RUN   TestCanny_Detect
+--- PASS: TestCanny_Detect (0.00s)
+=== RUN   TestHoughLines_Calc
+    imgproc_test.go:79: Invalid HoughLines test cols: 1598
+--- FAIL: TestHoughLines_Calc (0.00s)
+=== RUN   TestHoughLines_CalcWithStream
+    imgproc_test.go:140: Invalid HoughLines test cols: 1598
+--- FAIL: TestHoughLines_CalcWithStream (0.00s)
+=== RUN   TestResize
+--- PASS: TestResize (0.00s)
+=== RUN   TestResizeWithStream
+--- PASS: TestResizeWithStream (0.00s)
+=== RUN   TestPyrDown
+--- PASS: TestPyrDown (0.00s)
+=== RUN   TestPyrDownWithStream
+--- PASS: TestPyrDownWithStream (0.00s)
+=== RUN   TestPyrUp
+--- PASS: TestPyrUp (0.00s)
+=== RUN   TestPyrUpWithStream
+--- PASS: TestPyrUpWithStream (0.00s)
+=== RUN   TestRemap
+--- PASS: TestRemap (0.01s)
+=== RUN   TestRemapWithStream
+--- PASS: TestRemapWithStream (0.00s)
+FAIL
+FAIL	gocv.io/x/gocv/cuda	0.271s
+FAIL
+SUITE_RC=1
+
+-------- ISOLATED FAILURES (run individually; CoreX OpenCV lib gaps) --------
+### TestFlip
+  what():  cv::cuda::flip(InputArray _src, OutputArray _dst, int flipCode, Stream& stream) need to support!!!
+SIGABRT: abort
+
+### TestSparsePyrLKOpticalFlow_Calc
+  what():  OpenCV(4.6.0) /home/corex/sw_home/add-on/opencv/modules/core/include/opencv2/core/private.cuda.hpp:110: error: (-216:No CUDA support) The library is compiled without CUDA support in function 'throw_no_cuda'
+SIGABRT: abort
+
+### TestHoughSegment_Calc
+SIGILL: illegal instruction
+

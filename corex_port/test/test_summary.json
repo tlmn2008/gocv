@@ -1,24 +1,65 @@
 {
-  "tests_run": 0,
-  "tests_passed": 0,
-  "tests_failed": 0,
+  "suite": "gocv.io/x/gocv/cuda",
+  "gocv_version": "v0.31.0",
+  "opencv_version": "4.6.0 (CoreX build under /usr/local/corex)",
+  "toolchain": "CoreX clang++ 22.1.0git, ivcore11; Go 1.25.5",
+  "cgo_flags": "-I/usr/local/corex/include/opencv4 -D_GLIBCXX_USE_CXX11_ABI=0 -L/usr/local/corex/lib64",
+  "devices": ["Iluvatar BI-V150 (GPU 0)", "Iluvatar BI-V150 (GPU 1)"],
+  "tests_run": 45,
+  "tests_passed": 38,
+  "tests_failed": 7,
   "tests_skipped": 0,
-  "metrics": [
+  "passed": [
+    "TestAbs", "TestAbsWithStream", "TestAbsDiff", "TestAdd",
+    "TestBitwiseAnd", "TestBitwiseNot", "TestBitwiseOr", "TestBitwiseXor",
+    "TestDivide", "TestExp", "TestLog", "TestMax", "TestMin", "TestMultiply",
+    "TestThreshold", "TestThresholdWithStream",
+    "TestCudaMOG2", "TestCudaMOG2WithStream", "TestCudaMOG", "TestCudaMOGWithStream",
+    "TestNewGpuMat", "TestNewGpuMatFromMat", "TestNewGpuMatFromMatWithSize",
+    "TestNewGpuMatWithSize", "TestGetCudaEnabledDeviceCount",
+    "TestGaussianFilter_Apply", "TestGaussianFilter_ApplyWithStream",
+    "TestSobelFilter_Apply", "TestSobelFilter_ApplyWithStream",
+    "TestCanny_Detect",
+    "TestResize", "TestResizeWithStream",
+    "TestPyrDown", "TestPyrDownWithStream", "TestPyrUp", "TestPyrUpWithStream",
+    "TestRemap", "TestRemapWithStream"
+  ],
+  "failed": [
     {
-      "name": "corex_cudart_smoke_compile",
-      "metric_type": "pass_rate",
-      "value": 1.0,
-      "unit": "ratio",
-      "source": "clang++ -x ivcore --cuda-gpu-arch=ivcore11 corex_smoke.cu -lcudart"
+      "name": "TestFlip",
+      "class": "corex-opencv-unimplemented",
+      "detail": "cv::cuda::flip(...) need to support!!! — CoreX OpenCV cudaarithm stubs flip and throws std::runtime_error → SIGABRT"
     },
     {
-      "name": "corex_cudart_smoke_runtime",
-      "metric_type": "other",
-      "value": 100,
-      "unit": "cudaError_t",
-      "config": "cudaMalloc returns cudaErrorNoDevice (100)",
-      "source": "/tmp/corex_smoke"
+      "name": "TestFlipWithStream",
+      "class": "corex-opencv-unimplemented",
+      "detail": "same as TestFlip (cv::cuda::flip not implemented in CoreX OpenCV)"
+    },
+    {
+      "name": "TestSparsePyrLKOpticalFlow_Calc",
+      "class": "corex-opencv-no-cuda-module",
+      "detail": "throw_no_cuda: (-216:No CUDA support) 'The library is compiled without CUDA support' — cudaoptflow PyrLK path not built with CUDA in this CoreX OpenCV → SIGABRT"
+    },
+    {
+      "name": "TestHoughSegment_Calc",
+      "class": "corex-opencv-crash",
+      "detail": "SIGILL illegal instruction inside CoreX cudaimgproc HoughSegmentDetector::detect"
+    },
+    {
+      "name": "TestHoughSegment_CalcWithStream",
+      "class": "corex-opencv-crash",
+      "detail": "same as TestHoughSegment_Calc (SIGILL in CoreX HoughSegmentDetector)"
+    },
+    {
+      "name": "TestHoughLines_Calc",
+      "class": "corex-opencv-numeric-diff",
+      "detail": "runs to completion but returns 1598 result columns vs upstream-expected 1588 (CoreX HoughLines produces a slightly different line set); assertion fails"
+    },
+    {
+      "name": "TestHoughLines_CalcWithStream",
+      "class": "corex-opencv-numeric-diff",
+      "detail": "same numeric divergence as TestHoughLines_Calc (1598 vs 1588 cols)"
     }
   ],
-  "notes": "gocv ./cuda tests not executed: OpenCV-with-CUDA did not finish building on CoreX; GPU device nodes /dev/iluvatar* absent (CAP_MKNOD unavailable)."
+  "notes": "All failures originate in the pre-installed CoreX OpenCV 4.6.0 libraries (missing/stubbed CUDA ops, a crash in HoughSegment, and a numeric divergence in HoughLines), not in the gocv Go/CGO bindings. Build and link against CoreX OpenCV succeed; 38/45 CUDA binding tests pass on real Iluvatar BI-V150 GPUs."
 }

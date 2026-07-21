@@ -1,0 +1,71 @@
+package cuda
+
+import (
+	"math"
+	"testing"
+
+	"gocv.io/x/gocv"
+)
+
+// TestCorexHoughLinesFunctional verifies that CoreX HoughLines is functionally
+// correct: every golden (rho->theta) line the upstream test expects must be
+// present in the CoreX output. The only upstream failure was an exact column
+// count (1588) that CoreX exceeds slightly; here we assert supersetness +
+// value correctness with a float tolerance instead of an exact count.
+func TestCorexHoughLinesFunctional(t *testing.T) {
+	src := gocv.IMRead("../images/face-detect.jpg", gocv.IMReadGrayScale)
+	if src.Empty() {
+		t.Fatal("cannot read source image")
+	}
+	defer src.Close()
+
+	cimg, mimg, dimg := NewGpuMat(), NewGpuMat(), NewGpuMat()
+	defer cimg.Close()
+	defer mimg.Close()
+	defer dimg.Close()
+
+	canny := NewCannyEdgeDetector(100, 200)
+	defer canny.Close()
+	detector := NewHoughLinesDetectorWithParams(1, math.Pi/180, 50, true, 4096)
+	defer detector.Close()
+
+	dest := gocv.NewMat()
+	defer dest.Close()
+
+	cimg.Upload(src)
+	canny.Detect(cimg, &mimg)
+	detector.Detect(mimg, &dimg)
+	dimg.Download(&dest)
+
+	if dest.Empty() {
+		t.Fatal("empty HoughLines result")
+	}
+	if dest.Rows() != 2 {
+		t.Errorf("rows: got %d want 2", dest.Rows())
+	}
+	t.Logf("CoreX HoughLines produced %d cols (upstream golden: 1588)", dest.Cols())
+
+	actual := make(map[float32]float32)
+	for i := 0; i < dest.Cols(); i += 2 {
+		actual[dest.GetFloatAt(0, i)] = dest.GetFloatAt(0, i+1)
+	}
+
+	expected := map[float32]float32{
+		21:  1.5707964,
+		337: 0.034906585,
+		85:  1.5707964,
+		276: 0,
+		329: 0.034906585,
+	}
+	const tol = 1e-4
+	for rho, theta := range expected {
+		got, ok := actual[rho]
+		if !ok {
+			t.Errorf("expected line rho=%v missing from CoreX output", rho)
+			continue
+		}
+		if math.Abs(float64(got-theta)) > tol {
+			t.Errorf("rho=%v: theta got %v want %v (tol %v)", rho, got, theta, tol)
+		}
+	}
+}

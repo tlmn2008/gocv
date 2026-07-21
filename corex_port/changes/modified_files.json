@@ -8,7 +8,22 @@
       "CGO_CXXFLAGS/CGO_CPPFLAGS": "-I/usr/local/corex/include/opencv4 -D_GLIBCXX_USE_CXX11_ABI=0",
       "CGO_LDFLAGS": "-L/usr/local/corex/lib64"
     },
-    "source_changes_required": "none"
+    "source_changes_required": "optional workaround only (GPU flip via remap); core build/test needs no source change",
+    "repo_local_workarounds": [
+      {
+        "files": ["cuda/arithm.cpp", "cuda/arithm.h"],
+        "change": "GpuFlip reimplemented via cv::cuda::remap (CoreX cv::cuda::flip is a throw-stub); arithm.h includes opencv2/cudawarping.hpp",
+        "applies_to": "gocv v0.31.0 worktree (.tools/gocv-0.31)",
+        "evidence": "changes/corex_flip_remap.patch",
+        "note": "corex-port branch is based on release/v0.43.0; the buildable/tested code is v0.31.0, so the patch is preserved here as evidence rather than committed to a mismatched code version."
+      },
+      {
+        "files": ["cuda/corex_verify_test.go"],
+        "change": "Added TestCorexHoughLinesFunctional (tolerance/superset assertion) proving CoreX HoughLines is functionally correct",
+        "applies_to": "gocv v0.31.0 worktree",
+        "evidence": "changes/corex_verify_test.go.txt"
+      }
+    ]
   },
   "files": [
     {

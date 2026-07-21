@@ -1,0 +1,56 @@
+diff --git a/cuda/arithm.cpp b/cuda/arithm.cpp
+index 57b2386..a501c4d 100644
+--- a/cuda/arithm.cpp
++++ b/cuda/arithm.cpp
+@@ -139,10 +139,34 @@ void GpuThreshold(GpuMat src, GpuMat dst, double thresh, double maxval, int typ,
+     cv::cuda::threshold(*src, *dst, thresh, maxval, typ, *s);
+ }
+ 
++// CoreX OpenCV ships cv::cuda::flip as a throw-stub ("need to support!!!").
++// Implement flip on-GPU via cv::cuda::remap (a supported op on ivcore11) so the
++// binding stays GPU-resident. flipCode: 0=vertical, >0=horizontal, <0=both.
+ void GpuFlip(GpuMat src, GpuMat dst, int flipCode, Stream s) {
+-    if (s == NULL) {
+-        cv::cuda::flip(*src, *dst, flipCode);
+-        return;
+-    }
+-    cv::cuda::flip(*src, *dst, flipCode, *s);
++    int rows = src->rows, cols = src->cols;
++    cv::Mat mapx(rows, cols, CV_32FC1), mapy(rows, cols, CV_32FC1);
++    for (int y = 0; y < rows; y++) {
++        for (int x = 0; x < cols; x++) {
++            float sx = (float)x, sy = (float)y;
++            if (flipCode > 0) {
++                sx = (float)(cols - 1 - x);
++            } else if (flipCode == 0) {
++                sy = (float)(rows - 1 - y);
++            } else {
++                sx = (float)(cols - 1 - x);
++                sy = (float)(rows - 1 - y);
++            }
++            mapx.at<float>(y, x) = sx;
++            mapy.at<float>(y, x) = sy;
++        }
++    }
++    cv::cuda::GpuMat gmx, gmy;
++    gmx.upload(mapx);
++    gmy.upload(mapy);
++    if (s == NULL) {
++        cv::cuda::remap(*src, *dst, gmx, gmy, cv::INTER_NEAREST);
++        return;
++    }
++    cv::cuda::remap(*src, *dst, gmx, gmy, cv::INTER_NEAREST,
++                    cv::BORDER_CONSTANT, cv::Scalar(), *s);
+ }
+diff --git a/cuda/arithm.h b/cuda/arithm.h
+index 5310ecd..c043bbb 100644
+--- a/cuda/arithm.h
++++ b/cuda/arithm.h
+@@ -7,6 +7,7 @@
+ #ifdef __cplusplus
+ #include <opencv2/opencv.hpp>
+ #include <opencv2/cudaarithm.hpp>
++#include <opencv2/cudawarping.hpp>
+ extern "C" {
+ #endif
+ #include "cuda.h"

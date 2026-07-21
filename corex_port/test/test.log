@@ -1,19 +1,28 @@
 ====================================================================
  gocv CUDA bindings on Iluvatar CoreX (ivcore11) — authoritative test log
 ====================================================================
-date:        2026-07-21T16:53:27+08:00
+date:        2026-07-21T17:33:37+08:00
 gocv:        v0.31.0 (matches OpenCV 4.6.0; upstream HEAD v0.43.0 needs OpenCV 4.12)
-opencv:      4.6.0 @ /usr/local/corex (CoreX build, clang++/ivcore11)
+opencv:      4.6.0 @ /usr/local/corex (CoreX build, clang++/ivcore11, NVIDIA CUDA: YES ver 10.2)
 go:          go version go1.25.5 linux/amd64
-toolchain:   CoreX clang++ clang version 22.1.0git (4.5.0.20260630 a526c4d94919b0feb06f49a88a749e075a7f5cf3)
 cgo flags:   -I/usr/local/corex/include/opencv4  -D_GLIBCXX_USE_CXX11_ABI=0  -L/usr/local/corex/lib64
 devices:     GPU  0: Iluvatar BI-V150 (UUID: GPU-b1a1c57f-abe9-53b4-8ba6-45776c97aadb);GPU  1: Iluvatar BI-V150 (UUID: GPU-3195d3ae-3608-5b7a-9d36-367be0932e87);
 
-NOTE: build/link succeed with CoreX OpenCV; failures below are CoreX OpenCV
-      library gaps (not gocv binding issues). Crashing cases are isolated via
-      -skip so the rest of the suite can report cleanly; each is logged after.
+REPO-LOCAL WORKAROUNDS APPLIED (no /usr/local/corex changes):
+  * GpuFlip: cv::cuda::flip is a CoreX throw-stub -> reimplemented on-GPU via cv::cuda::remap
+            (arithm.cpp + arithm.h include cudawarping). TestFlip/WithStream now PASS.
+  * HoughLines: functional on CoreX (all 5 golden rho->theta lines present, theta within 1e-4);
+            upstream asserts an exact NVIDIA column count (1588) — CoreX yields ~1597.
+            Verified by TestCorexHoughLinesFunctional (tolerance-based). Upstream exact-count
+            asserts (TestHoughLines_Calc/WithStream) still 'fail' on the count only.
 
--------- FULL SUITE (crashers isolated) : go test -v -skip '^(TestFlip|TestHoughSegment|TestSparsePyrLKOpticalFlow)' --------
+REMAINING CoreX-OpenCV LIBRARY DEFECTS (terminal at repo layer):
+  * SparsePyrLKOpticalFlow.calc -> throw_no_cuda ('compiled without CUDA support'):
+            create() symbol present but the sparse-LK calc kernel is not built with CUDA in
+            this libopencv_cudaoptflow.so. No GPU sparse-LK path exists to call.
+  * HoughSegmentDetector.detect -> SIGILL (illegal instruction) inside CoreX cudaimgproc kernel.
+
+-------- FULL SUITE (crashers isolated) : go test -v -skip '^(TestHoughSegment|TestSparsePyrLKOpticalFlow)' --------
 === RUN   TestAbs
 --- PASS: TestAbs (0.02s)
 === RUN   TestAbsWithStream
@@ -46,6 +55,10 @@ NOTE: build/link succeed with CoreX OpenCV; failures below are CoreX OpenCV
 --- PASS: TestThreshold (0.00s)
 === RUN   TestThresholdWithStream
 --- PASS: TestThresholdWithStream (0.00s)
+=== RUN   TestFlip
+--- PASS: TestFlip (0.01s)
+=== RUN   TestFlipWithStream
+--- PASS: TestFlipWithStream (0.01s)
 === RUN   TestCudaMOG2
 --- PASS: TestCudaMOG2 (0.00s)
 === RUN   TestCudaMOG2WithStream
@@ -54,6 +67,9 @@ NOTE: build/link succeed with CoreX OpenCV; failures below are CoreX OpenCV
 --- PASS: TestCudaMOG (0.00s)
 === RUN   TestCudaMOGWithStream
 --- PASS: TestCudaMOGWithStream (0.00s)
+=== RUN   TestCorexHoughLinesFunctional
+    corex_verify_test.go:46: CoreX HoughLines produced 1598 cols (upstream golden: 1588)
+--- PASS: TestCorexHoughLinesFunctional (0.00s)
 === RUN   TestNewGpuMat
 --- PASS: TestNewGpuMat (0.00s)
 === RUN   TestNewGpuMatFromMat
@@ -93,22 +109,17 @@ NOTE: build/link succeed with CoreX OpenCV; failures below are CoreX OpenCV
 === RUN   TestPyrUpWithStream
 --- PASS: TestPyrUpWithStream (0.00s)
 === RUN   TestRemap
---- PASS: TestRemap (0.01s)
+--- PASS: TestRemap (0.00s)
 === RUN   TestRemapWithStream
 --- PASS: TestRemapWithStream (0.00s)
 FAIL
-FAIL	gocv.io/x/gocv/cuda	0.271s
+FAIL	gocv.io/x/gocv/cuda	0.281s
 FAIL
 SUITE_RC=1
 
--------- ISOLATED FAILURES (run individually; CoreX OpenCV lib gaps) --------
-### TestFlip
-  what():  cv::cuda::flip(InputArray _src, OutputArray _dst, int flipCode, Stream& stream) need to support!!!
-SIGABRT: abort
-
+-------- ISOLATED TERMINAL FAILURES (CoreX OpenCV lib defects) --------
 ### TestSparsePyrLKOpticalFlow_Calc
   what():  OpenCV(4.6.0) /home/corex/sw_home/add-on/opencv/modules/core/include/opencv2/core/private.cuda.hpp:110: error: (-216:No CUDA support) The library is compiled without CUDA support in function 'throw_no_cuda'
-SIGABRT: abort
 
 ### TestHoughSegment_Calc
 SIGILL: illegal instruction

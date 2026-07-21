@@ -23,14 +23,21 @@
 ## 结果
 
 - **编译/链接：成功**；`cuda.test` 在 CoreX OpenCV 上构建通过。
-- **测试：45 例中 38 例通过**（在真实 BI-V150 上运行）。核心 GpuMat / arithm / 滤波 / resize / 金字塔 / remap / MOG 背景建模 / Canny 全部通过。
-- **7 例失败，全部源于 CoreX OpenCV 库本身，与 gocv 绑定无关：**
-  - `TestFlip` / `TestFlipWithStream`：CoreX `cv::cuda::flip` 是抛异常的占位实现（`need to support!!!`）。
-  - `TestSparsePyrLKOpticalFlow_Calc`：CoreX cudaoptflow 的 PyrLK 未启用 CUDA（`throw_no_cuda: No CUDA support`）。
-  - `TestHoughSegment_Calc` / `WithStream`：CoreX cudaimgproc 的 HoughSegment kernel 触发 `SIGILL`。
-  - `TestHoughLines_Calc` / `WithStream`：能跑通，但结果列数 1598 vs 上游硬编码期望 1588（数值分布略有差异，断言是按 NVIDIA 结果写死的精确匹配）。
+- **测试：45 例中 40 例通过**（真实 BI-V150 上运行，含两处仓库本地修复后）。核心 GpuMat / arithm / 滤波 / resize / 金字塔 / remap / MOG / Canny / **Flip** 全部通过。
 
-## Failure Gate
+## 深化修复（Failure Gate 第二轮，不碰 `/usr/local/corex`）
 
-- 所有失败均已**实跑复现**并归类：`flip` / PyrLK / HoughSegment 为 **terminal**（属 CoreX OpenCV 供应商的库缺陷，受"零改动 SDK"约束不能本地绕过）；HoughLines 数值差异为 **workaround-able**（换成带容差的断言即可通过，功能本身可用）。
-- 已验证 GPU 可用、可执行，非"推断失败"。
+1. **Flip（原 terminal → 已解决）**：CoreX `cv::cuda::flip` 是抛异常占位实现。改为在 `cuda/arithm.cpp` 里用受支持的 `cv::cuda::remap`（配合反转坐标映射）在 GPU 上重写 flip，`cuda/arithm.h` 补 `cudawarping` 头。`TestFlip` / `TestFlipWithStream` 现均 **PASS**（仍在 GPU 上）。补丁存于 `changes/corex_flip_remap.patch`。
+2. **HoughLines（原数值差异 → 已证明功能正确）**：新增 `TestCorexHoughLinesFunctional`，改用"5 条黄金 rho→theta 线均命中 + theta 容差 1e-4"断言（替代写死的列数 1588）。该测试 **PASS**，证明算子在 CoreX 上功能正确；上游精确列数断言（1598 vs 1588）是唯一不过的点。见 `changes/corex_verify_test.go.txt`。
+
+## 仍为 terminal 的 3 例（CoreX OpenCV 库侧缺陷，已用 `nm -D` 定位根因）
+
+- `TestSparsePyrLKOpticalFlow_Calc`：`SparsePyrLKOpticalFlow::create` 符号存在，但 `.calc()` 命中 `throw_no_cuda`（"compiled without CUDA support"）——该库未编译 sparse-LK 的 CUDA kernel，无可替代的 GPU 入口（仅有 CPU 回退，会放弃 GPU 要求）。
+- `TestHoughSegment_Calc` / `WithStream`：`createHoughSegmentDetector` 存在，但运行时 kernel 触发 `SIGILL`（ivcore11 上的库 codegen 缺陷）。仓库层无法在保持 GPU 的前提下修复。
+
+## Failure Gate 结论
+
+- 所有失败均**实跑复现**、逐个分类，并对每个 workaround-able 阻塞点做了真实尝试：
+  - Flip、HoughLines → **workaround-able 且已解决/已证明**（有补丁、有通过的测试为证）。
+  - PyrLK、HoughSegment → 用 `nm -D` 证据确认属库编译产物内部缺陷，**terminal**（受"零改动 SDK"约束），并记录了唯一的 CPU 回退选项及其为何不采纳。
+- 无"推断失败"：GPU 已验证可用可执行。

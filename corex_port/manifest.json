@@ -15,6 +15,12 @@
   "tests_passed": 40,
   "tests_failed": 5,
   "tests_skipped": 0,
+  "upstream_assessment": {
+    "upstreamable": "no",
+    "nvidia_compatible": "preserved",
+    "notes": "未对 gocv 一等 binding 源码做就地改动;迁移=版本对齐 v0.31.0 + 链接预装 CoreX OpenCV(构建期环境变量) + 附加的 from-source 构建脚本/patch(新增文件、默认路径不变)。GPU flip 经 remap 重写与 HoughLines 功能测试仅作为 CoreX 版 OpenCV 库缺陷的规避/佐证(未提交到不匹配的 v0.43 源码树)，非 gocv 自身缺陷，无独立回上游价值。"
+  },
+  "bugfixes": [],
   "github": {
     "fork_url": "https://github.com/tlmn2008/gocv",
     "branch": "corex-port",

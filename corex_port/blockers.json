@@ -1,15 +1,16 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "repo": "gocv",
+  "target": "BI-V150",
   "blockers": [
     {
       "id": "1",
-      "symptom": "gocv HEAD (v0.43.0) requires OpenCV 4.12; environment ships CoreX OpenCV 4.6.0 — aruco/dnn/objdetect API mismatch, build fails",
-      "classification": "workaround-able",
-      "resolved": true,
+      "desc": "gocv HEAD (v0.43.0) requires OpenCV 4.12; environment ships CoreX OpenCV 4.6.0 — aruco/dnn/objdetect API mismatch, build fails",
+      "verdict": "workaround",
+      "status": "fixed",
       "file": "gocv cuda/*.cpp against /usr/local/corex OpenCV 4.6.0",
-      "final_verdict": "Resolved by version-matching gocv to the installed OpenCV.",
-      "error_snippet": "no member named 'aruco' in namespace 'cv'; cv::dnn::dnn4_v20220524 mismatch",
+      "error": "no member named 'aruco' in namespace 'cv'; cv::dnn::dnn4_v20220524 mismatch",
+      "root_cause": "结论: Resolved by version-matching gocv to the installed OpenCV.",
       "attempts": [
         {
           "action": "Check out matching gocv release for OpenCV 4.6.0 (v0.31.0) as a git worktree at .tools/gocv-0.31",
@@ -19,12 +20,12 @@
     },
     {
       "id": "2",
-      "symptom": "Link fails: undefined reference to cv:: symbols (imread/putText/dnn/...) despite libs present",
-      "classification": "workaround-able",
-      "resolved": true,
+      "desc": "Link fails: undefined reference to cv:: symbols (imread/putText/dnn/...) despite libs present",
+      "verdict": "workaround",
+      "status": "fixed",
       "file": "CoreX libopencv_*.so.4.6.0",
-      "final_verdict": "Resolved: CoreX OpenCV uses the pre-C++11 libstdc++ string ABI; gocv wrappers must match.",
-      "error_snippet": "undefined reference to `cv::imread(std::__cxx11::basic_string...)`; cannot find -lopencv_* (wrong -L)",
+      "error": "undefined reference to `cv::imread(std::__cxx11::basic_string...)`; cannot find -lopencv_* (wrong -L)",
+      "root_cause": "结论: Resolved: CoreX OpenCV uses the pre-C++11 libstdc++ string ABI; gocv wrappers must match.",
       "attempts": [
         {
           "action": "Set CGO_LDFLAGS=-L/usr/local/corex/lib64 (opencv4.pc hardcodes /usr/local/lib64) via pkg-config --define-prefix",
@@ -38,12 +39,12 @@
     },
     {
       "id": "3",
-      "symptom": "cv::cuda::flip not implemented in CoreX OpenCV (cudaarithm)",
-      "classification": "workaround-able",
-      "resolved": true,
+      "desc": "cv::cuda::flip not implemented in CoreX OpenCV (cudaarithm)",
+      "verdict": "workaround",
+      "status": "fixed",
       "file": "libopencv_cudaarithm.so.4.6.0",
-      "final_verdict": "Resolved at repo layer: flip reimplemented via cv::cuda::remap; stays GPU-resident, no SDK changes. (Note: the CoreX flip stub itself remains a vendor gap, as do meanStdDev/rectStdDev and several cudaimgproc/cudafilters ops.)",
-      "error_snippet": "cv::cuda::flip(...) need to support!!! -> std::runtime_error -> SIGABRT (TestFlip/TestFlipWithStream)",
+      "error": "cv::cuda::flip(...) need to support!!! -> std::runtime_error -> SIGABRT (TestFlip/TestFlipWithStream)",
+      "root_cause": "结论: Resolved at repo layer: flip reimplemented via cv::cuda::remap; stays GPU-resident, no SDK changes. (Note: the CoreX flip stub itself remains a vendor gap, as do meanStdDev/rectStdDev and several cudaimgproc/cudafilters ops.)",
       "attempts": [
         {
           "action": "Confirm via strings on the CoreX cudaarithm lib; the op is a compiled-in stub that throws",
@@ -57,12 +58,12 @@
     },
     {
       "id": "4",
-      "symptom": "cudaoptflow SparsePyrLK path built without CUDA support",
-      "classification": "terminal",
-      "resolved": false,
+      "desc": "cudaoptflow SparsePyrLK path built without CUDA support",
+      "verdict": "corex-issue",
+      "status": "open",
       "file": "libopencv_cudaoptflow.so.4.6.0 / core private.cuda.hpp",
-      "final_verdict": "Terminal for this SDK build: the installed CoreX OpenCV exposes SparsePyrLKOpticalFlow::create but ships no CUDA-compiled sparse-LK calc kernel (throw_no_cuda). No GPU-preserving repo-layer substitute exists.",
-      "error_snippet": "(-216:No CUDA support) 'The library is compiled without CUDA support' in throw_no_cuda (TestSparsePyrLKOpticalFlow_Calc)",
+      "error": "(-216:No CUDA support) 'The library is compiled without CUDA support' in throw_no_cuda (TestSparsePyrLKOpticalFlow_Calc)",
+      "root_cause": "结论: Terminal for this SDK build: the installed CoreX OpenCV exposes SparsePyrLKOpticalFlow::create but ships no CUDA-compiled sparse-LK calc kernel (throw_no_cuda). No GPU-preserving repo-layer substitute exists.",
       "attempts": [
         {
           "action": "Ran the single test; exception originates inside the CoreX OpenCV library, not gocv",
@@ -76,12 +77,12 @@
     },
     {
       "id": "5",
-      "symptom": "HoughSegmentDetector::detect crashes with SIGILL on CoreX",
-      "classification": "terminal",
-      "resolved": false,
+      "desc": "HoughSegmentDetector::detect crashes with SIGILL on CoreX",
+      "verdict": "corex-issue",
+      "status": "open",
       "file": "libopencv_cudaimgproc.so.4.6.0",
-      "final_verdict": "Terminal for this SDK build: illegal instruction emitted by the CoreX HoughSegment CUDA kernel (library codegen defect). Report to CoreX OpenCV vendor.",
-      "error_snippet": "SIGILL: illegal instruction during cgo call to HoughSegmentDetector_Detect (TestHoughSegment_Calc/WithStream)",
+      "error": "SIGILL: illegal instruction during cgo call to HoughSegmentDetector_Detect (TestHoughSegment_Calc/WithStream)",
+      "root_cause": "结论: Terminal for this SDK build: illegal instruction emitted by the CoreX HoughSegment CUDA kernel (library codegen defect). Report to CoreX OpenCV vendor.",
       "attempts": [
         {
           "action": "Isolated the test; crash is inside the CoreX cudaimgproc library kernel, reproducible standalone",
@@ -95,12 +96,12 @@
     },
     {
       "id": "6",
-      "symptom": "HoughLines returns 1598 result columns vs upstream-expected 1588 (numeric divergence)",
-      "classification": "workaround-able",
-      "resolved": true,
+      "desc": "HoughLines returns 1598 result columns vs upstream-expected 1588 (numeric divergence)",
+      "verdict": "workaround",
+      "status": "fixed",
       "file": "libopencv_cudaimgproc.so.4.6.0 HoughLinesDetector",
-      "final_verdict": "Functionally correct on CoreX (proven). The upstream failure is purely a hard-coded NVIDIA column count; a tolerance/superset assertion passes. Not a hardware or binding defect.",
-      "error_snippet": "imgproc_test.go:79: Invalid HoughLines test cols: 1598 (TestHoughLines_Calc/WithStream)",
+      "error": "imgproc_test.go:79: Invalid HoughLines test cols: 1598 (TestHoughLines_Calc/WithStream)",
+      "root_cause": "结论: Functionally correct on CoreX (proven). The upstream failure is purely a hard-coded NVIDIA column count; a tolerance/superset assertion passes. Not a hardware or binding defect.",
       "attempts": [
         {
           "action": "Test runs to completion and produces a valid (non-empty) line set; only the exact count differs from the NVIDIA-derived golden value baked into the upstream test",

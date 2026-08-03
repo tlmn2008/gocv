@@ -1,77 +1,29 @@
 {
-  "suite": "gocv.io/x/gocv/cuda",
-  "gocv_version": "v0.31.0",
-  "opencv_version": "4.6.0 (CoreX build under /usr/local/corex, NVIDIA CUDA: YES ver 10.2)",
-  "toolchain": "CoreX clang++ 22.1.0git, ivcore11; Go 1.25.5",
-  "cgo_flags": "-I/usr/local/corex/include/opencv4 -D_GLIBCXX_USE_CXX11_ABI=0 -L/usr/local/corex/lib64",
-  "devices": ["Iluvatar BI-V150 (GPU 0)", "Iluvatar BI-V150 (GPU 1)"],
   "tests_run": 45,
   "tests_passed": 40,
   "tests_failed": 5,
   "tests_skipped": 0,
-  "repo_local_workarounds": [
-    {
-      "target": "TestFlip, TestFlipWithStream",
-      "problem": "cv::cuda::flip is a CoreX throw-stub ('need to support!!!')",
-      "fix": "Reimplemented GpuFlip on-GPU via cv::cuda::remap with a reversed coordinate map (cuda/arithm.cpp; cuda/arithm.h now includes cudawarping). No /usr/local/corex changes.",
-      "evidence": "changes/corex_flip_remap.patch",
-      "result": "both tests now PASS on GPU"
-    },
-    {
-      "target": "TestHoughLines_Calc, TestHoughLines_CalcWithStream",
-      "problem": "Upstream asserts an exact NVIDIA column count (1588); CoreX HoughLines returns ~1597-1598.",
-      "fix": "Added TestCorexHoughLinesFunctional (changes/corex_verify_test.go.txt): asserts all 5 golden rho->theta lines are present with theta within 1e-4 tolerance instead of an exact count.",
-      "evidence": "changes/corex_verify_test.go.txt",
-      "result": "functional correctness PROVEN (TestCorexHoughLinesFunctional PASSES); upstream exact-count asserts still fail on the count only"
-    }
-  ],
-  "passed": [
-    "TestAbs", "TestAbsWithStream", "TestAbsDiff", "TestAdd",
-    "TestBitwiseAnd", "TestBitwiseNot", "TestBitwiseOr", "TestBitwiseXor",
-    "TestDivide", "TestExp", "TestLog", "TestMax", "TestMin", "TestMultiply",
-    "TestThreshold", "TestThresholdWithStream",
-    "TestFlip", "TestFlipWithStream",
-    "TestCudaMOG2", "TestCudaMOG2WithStream", "TestCudaMOG", "TestCudaMOGWithStream",
-    "TestNewGpuMat", "TestNewGpuMatFromMat", "TestNewGpuMatFromMatWithSize",
-    "TestNewGpuMatWithSize", "TestGetCudaEnabledDeviceCount",
-    "TestGaussianFilter_Apply", "TestGaussianFilter_ApplyWithStream",
-    "TestSobelFilter_Apply", "TestSobelFilter_ApplyWithStream",
-    "TestCanny_Detect",
-    "TestResize", "TestResizeWithStream",
-    "TestPyrDown", "TestPyrDownWithStream", "TestPyrUp", "TestPyrUpWithStream",
-    "TestRemap", "TestRemapWithStream"
-  ],
-  "failed": [
+  "failures": [
     {
       "name": "TestHoughLines_Calc",
-      "class": "upstream-golden-count-only",
-      "terminal": false,
-      "detail": "Op is functionally correct on CoreX (proven by TestCorexHoughLinesFunctional). Only the hard-coded NVIDIA column count (1588 vs ~1598) fails."
+      "reason": "Op is functionally correct on CoreX (proven by TestCorexHoughLinesFunctional). Only the hard-coded NVIDIA column count (1588 vs ~1598) fails."
     },
     {
       "name": "TestHoughLines_CalcWithStream",
-      "class": "upstream-golden-count-only",
-      "terminal": false,
-      "detail": "Same as TestHoughLines_Calc (count-only divergence; functionally correct)."
+      "reason": "Same as TestHoughLines_Calc (count-only divergence; functionally correct)."
     },
     {
       "name": "TestSparsePyrLKOpticalFlow_Calc",
-      "class": "corex-opencv-no-cuda-module",
-      "terminal": true,
-      "detail": "SparsePyrLKOpticalFlow::create symbol exists but .calc throws throw_no_cuda ('The library is compiled without CUDA support', core/private.cuda.hpp:110). The sparse-LK calc kernel is not built with CUDA in this libopencv_cudaoptflow.so — no GPU sparse-LK path to call. Unfixable at repo layer without rebuilding CoreX OpenCV."
+      "reason": "SparsePyrLKOpticalFlow::create symbol exists but .calc throws throw_no_cuda ('The library is compiled without CUDA support', core/private.cuda.hpp:110). The sparse-LK calc kernel is not built with CUDA in this libopencv_cudaoptflow.so — no GPU sparse-LK path to call. Unfixable at repo layer without rebuilding CoreX OpenCV."
     },
     {
       "name": "TestHoughSegment_Calc",
-      "class": "corex-opencv-crash",
-      "terminal": true,
-      "detail": "SIGILL (illegal instruction) inside CoreX cudaimgproc HoughSegmentDetector detect kernel. createHoughSegmentDetector symbol present; the compiled device kernel emits an illegal instruction on ivcore11. Unfixable at repo layer."
+      "reason": "SIGILL (illegal instruction) inside CoreX cudaimgproc HoughSegmentDetector detect kernel. createHoughSegmentDetector symbol present; the compiled device kernel emits an illegal instruction on ivcore11. Unfixable at repo layer."
     },
     {
       "name": "TestHoughSegment_CalcWithStream",
-      "class": "corex-opencv-crash",
-      "terminal": true,
-      "detail": "Same as TestHoughSegment_Calc (SIGILL in CoreX HoughSegment kernel)."
+      "reason": "Same as TestHoughSegment_Calc (SIGILL in CoreX HoughSegment kernel)."
     }
   ],
-  "notes": "After two repo-local workarounds (GPU flip via remap; tolerance-based HoughLines verification), 40/45 upstream CUDA binding tests pass on real Iluvatar BI-V150 GPUs, plus the added functional test. Remaining 3 hard failures are defects inside the pre-installed CoreX OpenCV 4.6.0 libraries (sparse-LK not built with CUDA; HoughSegment kernel SIGILL) and cannot be fixed without touching /usr/local/corex. The 2 HoughLines 'failures' are functionally correct and differ only in an exact golden count."
+  "notes": "After two repo-local workarounds (GPU flip via remap; tolerance-based HoughLines verification), 40/45 upstream CUDA binding tests pass on real Iluvatar BI-V150 GPUs, plus the added functional test. Remaining 3 hard failures are defects inside the pre-installed CoreX OpenCV 4.6.0 libraries (sparse-LK not built with CUDA; HoughSegment kernel SIGILL) and cannot be fixed without touching /usr/local/corex. The 2 HoughLines 'failures' are functionally correct and differ only in an exact golden count.\nsuite: gocv.io/x/gocv/cuda\ngocv_version: v0.31.0\nopencv_version: 4.6.0 (CoreX build under /usr/local/corex, NVIDIA CUDA: YES ver 10.2)\ntoolchain: CoreX clang++ 22.1.0git, ivcore11; Go 1.25.5\ncgo_flags: -I/usr/local/corex/include/opencv4 -D_GLIBCXX_USE_CXX11_ABI=0 -L/usr/local/corex/lib64\ndevices: [\"Iluvatar BI-V150 (GPU 0)\", \"Iluvatar BI-V150 (GPU 1)\"]\nrepo_local_workarounds: [{\"target\": \"TestFlip, TestFlipWithStream\", \"problem\": \"cv::cuda::flip is a CoreX throw-stub ('need to support!!!')\", \"fix\": \"Reimplemented GpuFlip on-GPU via cv::cuda::remap with a reversed coordinate map (cuda/arithm.cpp; cuda/arithm.h now includes cudawarping). No /usr/local/corex changes.\", \"evidence\": \"changes/corex_flip_remap.patch\", \"result\": \"both tests now PASS on GPU\"}, {\"target\": \"TestHoughLines_Calc, TestHoughLines_CalcWithStream\", \"problem\": \"Upstream asserts an exact NVIDIA column count (1588); CoreX HoughLines returns ~1597-1598.\", \"fix\": \"Added TestCorexHoughLinesFunctional (changes/corex_verify_test.go.txt): asserts all 5 golden rho->theta lines are present with theta within 1e-4 tolerance instead of an exact count.\", \"evidence\": \"changes/corex_verify_test.go.txt\", \"result\": \"functional correctness PROVEN (TestCorexHoughLinesFunctional PASSES); upstream exact-count asserts still fail on the count only\"}]\npassed: [\"TestAbs\", \"TestAbsWithStream\", \"TestAbsDiff\", \"TestAdd\", \"TestBitwiseAnd\", \"TestBitwiseNot\", \"TestBitwiseOr\", \"TestBitwiseXor\", \"TestDivide\", \"TestExp\", \"TestLog\", \"TestMax\", \"TestMin\", \"TestMultiply\", \"TestThreshold\", \"TestThresholdWithStream\", \"TestFlip\", \"TestFlipWithStream\", \"TestCudaMOG2\", \"TestCudaMOG2WithStream\", \"TestCudaMOG\", \"TestCudaMOGWithStream\", \"TestNewGpuMat\", \"TestNewGpuMatFromMat\", \"TestNewGpuMatFromMatWithSize\", \"TestNewGpuMatWithSize\", \"TestGetCudaEnabledDeviceCount\", \"TestGaussianFilter_Apply\", \"TestGaussianFilter_ApplyWithStream\", \"TestSobelFilter_Apply\", \"TestSobelFilter_ApplyWithStream\", \"TestCanny_Detect\", \"TestResize\", \"TestResizeWithStream\", \"TestPyrDown\", \"TestPyrDownWithStream\", \"TestPyrUp\", \"TestPyrUpWithStream\", \"TestRemap\", \"TestRemapWithStream\"]"
 }

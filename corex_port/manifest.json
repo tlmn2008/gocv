@@ -20,6 +20,10 @@
     "notes": "未对 gocv 一等 binding 源码做就地改动,迁移=整库版本对齐至 v0.31.0 + 链接预装 CoreX OpenCV + 附加 from-source 构建脚本/patch。GPU flip 经 remap 重写、HoughLines 测试仅为 CoreX 版 OpenCV 库缺陷的规避/佐证(未提交到不匹配的 v0.43 源码树),非 gocv 自身缺陷。整库降版本 + 绑定 CoreX OpenCV 环境属结构性卡点,无法干净剥离成上游 PR,无可上游内容。"
   },
   "bugfixes": [],
+  "defects_summary": {
+    "count": 2,
+    "high_confidence": 0
+  },
   "github": {
     "fork_url": "https://github.com/tlmn2008/gocv",
     "branch": "corex-port",

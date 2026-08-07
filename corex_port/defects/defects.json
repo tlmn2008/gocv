@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "repo": "gocv",
+  "target": "BI-V150",
+  "sdk_version": "CoreX 4.5.0.20260630",
+  "defects": [
+    {
+      "id": "opencv-cudaoptflow-sparse-pyrlk-no-cuda",
+      "defect_key": "other:opencv-cuda-sparse-pyrlk-no-cuda-support",
+      "desc": "CoreX 预装 OpenCV 4.6.0 的 libopencv_cudaoptflow 里 SparsePyrLKOpticalFlow::create 符号已导出，但 .calc() 运行时命中 throw_no_cuda('The library is compiled without CUDA support')，即该稀疏 LK 计算 kernel 未以 CUDA 编译进这份 CoreX 库。",
+      "suspected_component": "other",
+      "component_detail": "CoreX 预装 OpenCV 4.6.0 库 libopencv_cudaoptflow.so.4.6.0：SparsePyrLKOpticalFlow.calc 的 CUDA 计算 kernel 缺失(throw_no_cuda @ core/private.cuda.hpp:110)，属 CoreX 版 OpenCV 供应链构建缺口，不属 CUDA SDK 常规子系统枚举",
+      "confidence": "medium",
+      "symptom": "other",
+      "affected_tests": [
+        "TestSparsePyrLKOpticalFlow_Calc"
+      ],
+      "error": "(-216:No CUDA support) 'The library is compiled without CUDA support' in throw_no_cuda, core/private.cuda.hpp:110",
+      "root_cause_hypothesis": "CoreX 提供的 OpenCV 4.6.0 二进制在构建时未把 cudaoptflow 的稀疏 Pyramidal Lucas-Kanade 光流计算 kernel 编入 CUDA 支持：create 工厂符号存在(故能构造对象)，但 .calc() 进入 throw_no_cuda 分支。疑似 CoreX 版 OpenCV 打包/构建配置缺陷(该 op 未启用 CUDA)，需 CoreX 侧重编该库修复，非 gocv 绑定层可解。",
+      "evidence": "隔离出 CoreX 因素：nm -D libopencv_cudaoptflow.so.4.6.0 显示 SparsePyrLKOpticalFlow::create 已导出、同库还含 throw_no_cuda，异常自 CoreX OpenCV 库内部抛出(非 gocv 产物)；同库 Dense/Brox/Farneback/TVL1/Nvidia OF 的 create 符号均在。无法在不触碰 /usr/local/corex 的前提下 repo-local 修复，也无对应 GPU 稀疏-LK 替代入口。因缺陷在预编译供应库内部、无法脱离 OpenCV 最小隔离为独立 .cu 复现件，故置 medium、不附 reproduce。",
+      "blocker_ref": "4",
+      "ref": "iluvatar-cuda-base: CoreX OpenCV 4.6.0 cudaoptflow 稀疏-LK 未编译 CUDA 支持"
+    },
+    {
+      "id": "opencv-cudaimgproc-houghsegment-sigill",
+      "defect_key": "other:opencv-cuda-houghsegment-kernel-sigill",
+      "desc": "CoreX 预装 OpenCV 4.6.0 的 libopencv_cudaimgproc 中 HoughSegmentDetector.detect 在 ivcore11 上运行时发射非法指令(SIGILL)崩溃，createHoughSegmentDetector 符号存在，崩溃来自编译进库的设备 kernel(概率 Hough/hough_lines 路径)。",
+      "suspected_component": "other",
+      "component_detail": "CoreX 预装 OpenCV 4.6.0 库 libopencv_cudaimgproc.so.4.6.0：HoughSegmentDetector.detect 的设备 kernel 在 ivcore11 上发射非法指令(SIGILL)，属供应商预编译库的设备端 codegen 缺陷，不属本次可编译的 CUDA SDK 子系统枚举",
+      "confidence": "medium",
+      "symptom": "crash",
+      "affected_tests": [
+        "TestHoughSegment_Calc",
+        "TestHoughSegment_CalcWithStream"
+      ],
+      "error": "SIGILL: illegal instruction during cgo call to HoughSegmentDetector_Detect",
+      "root_cause_hypothesis": "CoreX 版 OpenCV 4.6.0 里概率 Hough 线段检测的 CUDA 设备 kernel 被编译成了在 ivcore11 上非法的指令序列，运行到该 kernel 即 SIGILL。符号(createHoughSegmentDetector/HoughSegmentDetectorImpl)俱在，说明不是缺符号而是设备 kernel codegen 缺陷。疑似 CoreX 版 OpenCV 的 GPU kernel 针对 ivcore11 的指令生成缺陷，需供应商侧修复/重编。",
+      "evidence": "隔离出 CoreX 因素：nm -D libopencv_cudaimgproc.so.4.6.0 确认符号齐全，崩溃是运行时设备 kernel 发出的非法指令而非缺符号，且在测试外亦可独立复现(crash is inside the CoreX cudaimgproc library kernel, reproducible standalone)；同库其它 imgproc op(如 Canny/HoughLines)可运行，仅 HoughSegment SIGILL。repo 层无法在不重写整套 GPU 概率 Hough 的前提下修复(CPU cv::HoughLinesP 回退会放弃 GPU 要求)。缺陷位于预编译供应库设备 kernel、无法脱离 OpenCV 最小隔离为独立 .cu 复现件，故置 medium、不附 reproduce。",
+      "blocker_ref": "5",
+      "ref": "iluvatar-cuda-base: CoreX OpenCV 4.6.0 cudaimgproc HoughSegment 设备 kernel SIGILL"
+    }
+  ],
+  "notes": "gocv 是 OpenCV 的 Go 绑定，迁移=整库版本对齐至 v0.31.0 + 链接 CoreX 预装 OpenCV 4.6.0。升级 2 条 corex-issue 为 defect，均落在 CoreX 预装 OpenCV 库内部(故 suspected_component=other，细节见 component_detail)：blocker 4(SparsePyrLK 未编译 CUDA 支持)与 blocker 5(HoughSegment 设备 kernel SIGILL)，二者根因不同(缺 CUDA kernel vs 设备 kernel 非法指令)故分为两条，均 medium(缺陷在预编译供应库内部，无法脱离 OpenCV 最小隔离为独立 .cu 件)。未升级项：blocker 6(HoughLines 列数 1598 vs 1588)为功能正确、仅硬编码 NVIDIA golden 列数不符，verdict=workaround(已加容差断言证明正确)属 not-corex 性质；blocker 3(cv::cuda::flip 为 throw-stub)verdict=workaround 已用 remap 在 GPU 上重实现修复；blocker 1/2(OpenCV 版本对齐/ABI 链接)verdict=workaround 已解决——按『仅 corex-issue 升级』规则均不在此升级。"
+}
